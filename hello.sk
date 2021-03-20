@@ -1,9 +1,9 @@
 options:
     botName: oHCF
-    token: ODE0NDM3NTUyMjkwOTIyNDk3.YDd2Ew.8TfEMTCMStkGvoCrQHi69x4LUiU
+    token: (discord had ago at me when I put my token so that's why the token isn't here)
 
 on skript load:
-    login to "ODE0NDM3NTUyMjkwOTIyNDk3.YDd2Ew.8TfEMTCMStkGvoCrQHi69x4LUiU" with the name "oHCF"
+    login to "(discord had ago at me when I put my token so that's why the token isn't here)" with the name "oHCF"
     set status of "oHCF" to online
     set {_channel} to channel with id "812804124651159553"
     send typing in {_channel} with "oHCF"
