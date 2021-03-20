@@ -1,0 +1,236 @@
+options:
+    botName: oHCF
+    token: ODE0NDM3NTUyMjkwOTIyNDk3.YDd2Ew.8TfEMTCMStkGvoCrQHi69x4LUiU
+
+on skript load:
+    login to "ODE0NDM3NTUyMjkwOTIyNDk3.YDd2Ew.8TfEMTCMStkGvoCrQHi69x4LUiU" with the name "oHCF"
+    set status of "oHCF" to online
+    set {_channel} to channel with id "812804124651159553"
+    send typing in {_channel} with "oHCF"
+    send "oHCF is now online!" to {_channel} with "oHCF"
+
+on join:
+    create embed:
+        set the title of embed to "Server Join"
+        set the description of embed to "```%newline%%player%%newline%%player's uuid%```"
+        set the timestamp of embed to now
+        set the color of embed to green
+    send the last created embed to channel with id "814996940117770290" with {@botName}
+
+on quit:
+    create embed:
+        set the title of embed to "Server Quit"
+        set the description of embed to "```%newline%%player%%newline%%player's uuid%```"
+        set the timestamp of embed to now
+        set the color of embed to RED
+    send the last created embed to channel with id "814996940117770290" with {@botName}
+
+on chat:
+    create embed:
+        set the title of embed to "%player%"
+        set the description of embed to "```%newline%%message%```"
+        set the footer of embed to footer with text player's uuid
+        set the timestamp of embed to now
+        set the color of embed to RED
+    send the last created embed to channel with id "814488000876642314" with {@botName}
+
+on track end:
+    if event-bot is "{@botName}":
+        wait 1 second
+        if event-bot is not playing:
+            make "{@botName}" disconnect from voice
+            clear {_results::*}
+        else:
+            loop all players:
+                if loop-player is "TescoExpress":
+                    send "&3&lSONG LOG >> &bNow playing: %track event-bot is playing% &bby %authors of track event-bot is playing%" to loop-player
+            
+discord command purge [<integer>]:
+    executable in: guild
+    prefixes: .
+    bots: {@botName}
+    trigger:
+        set {_channel} to event-channel
+        set {_num} to arg-1
+        grab the last {_num} messages in {_channel}
+        purge the grabbed messages with event-bot
+        reply with "I have successfully purged %arg-1% messages."
+
+discord command play [<text>]:
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        if voice channel of event-member is set:
+            if arg 1 is set:
+                if arg 1 contains "index" or "start_radio":
+                    reply with "**.play** **Format is invalid. Use youtube link.** :x:"
+                    stop
+                if arg 1 contains "youtube.com" or "youtu.be":
+                    set {_user} to event-member
+                    join voice channel of event-member
+                    search soundcloud for arg-1 and store the results in {_results::*}
+                    play {_results::1}
+                    wait 1 second
+                    resume the track event-bot is playing
+                    loop all players:
+                        if loop-player is "TescoExpress":
+                            send "&3&lSONG LOG >> &b%{_user}% &brequested %{_results::1}% by %authors of track event-bot is playing%" to loop-player
+                    create embed:
+                        set the title of embed to "Now plaing"
+                        set the thumbnail of embed to "https://img.youtube.com/vi/%identifier of {_results::1} %/hqdefault.jpg"
+                        set the description of embed to "%{_results::1}% from Soundcloud"
+                        set the footer of embed to footer with text "%event-user%"
+                        add field named "Song duration" with value "%difference between position of track event-bot is playing and duration of track event-bot is playing%" to embed
+                        set the timestamp of embed to now
+                        set the color of embed to green
+                    send the last created embed to event-channel with event-bot
+                else:
+                    search soundcloud for arg-1 and store the results in {_results::*}
+                    if {_results::*} is set:
+                        set {_user} to event-member
+                        join voice channel of event-member
+                        play {_results::1}
+                        wait 1 second
+                        resume the track event-bot is playing
+                        loop all players:
+                            if loop-player is "TescoExpress":
+                                send "&3&lSONG LOG >> &b%{_user}% &brequested %{_results::1}%" to loop-player
+                        create embed:
+                            set the title of embed to "Added to queue"
+                            set the thumbnail of embed to "https://img.youtube.com/vi/%identifier of {_results::1} %/hqdefault.jpg"
+                            set the footer of embed to footer with text "%event-user%"
+                            add field named "Song duration" with value "%duration of {_results::1} %" to embed
+                            set description of embed to "%{_results::1}% from Soundcloud"
+                            set the timestamp of embed to now
+                            set the color of embed to green
+                        send the last created embed to event-channel with event-bot
+                    else:
+                        create embed:
+                            set the title of embed to "Track not found"
+                            set the footer of embed to footer with text "%event-user%"
+                            set the timestamp of embed to now
+                            set the color of embed to red
+                        send the last created embed to event-channel with event-bot
+            else:
+                reply with "**.play** **Format is invalid. Use track name or youtube link.** :x:"
+        else:
+            reply with "**Join voice channel**"
+ 
+discord command queue:
+    aliases: list
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        
+        set {_queue::*} to queue of event-bot
+        set {_num} to -1
+        make embed:
+            set title of embed to title with text "Queue"
+            loop 11 times:
+                add 1 to {_num}
+                if {_queue::%{_num}%} is set:
+                    add field named "-=[%{_num}%]=-" with value "%{_queue::%{_num}%}%" to embed
+            set the footer of embed to footer with text "%event-user%"
+            set the timestamp of embed to now
+            set the color of embed to blue
+        reply with last created embed
+ 
+discord command pause:
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        make embed:
+            set title of embed to title with text "Paused"
+            set description of embed to discord name of track event-bot is playing
+            set the footer of embed to footer with text "%event-user%"
+            set the timestamp of embed to now
+            set the color of embed to red
+        reply with last created embed  
+        pause the track event-bot is playing
+ 
+discord command resume:
+    prefixes: .
+    executable in: guild
+    trigger:
+        resume the track event-bot is playing
+        make embed:
+            set title of embed to title with text "Resumed"
+            set description of embed to discord name of track event-bot is playing
+            set the footer of embed to footer with text "%event-user%"
+            set the timestamp of embed to now
+            set the color of embed to green
+        reply with last created embed
+ 
+discord command stop:
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        make embed:
+            set title of embed to title with text "Stopped"
+            if track "{@botName}" is playing is set:
+                set description of embed to discord name of track event-bot is playing
+            set the footer of embed to footer with text "%event-user%"
+            set the timestamp of embed to now
+            set the color of embed to red
+        reply with last created embed
+        stop the track event-bot is playing
+        make "{@botName}" disconnect from voice
+       
+discord command skip:
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        if track "{@botName}" is playing is set:
+            make embed:
+                set title of embed to title with text "Skipped"
+                set description of embed to discord name of track event-bot is playing
+                set the thumbnail of embed to "https://img.youtube.com/vi/%identifier of {_results::1} %/hqdefault.jpg"
+                skip the track event-bot is playing
+                if track "{@botName}" is playing is set:
+                    add split field named "Now playing" with value "%track event-bot is playing%" to embed
+                set the footer of embed to footer with text "%event-user%"
+                set the thumbnail of embed to "https://img.youtube.com/vi/%identifier of {_results::1} %/hqdefault.jpg"
+                set the timestamp of embed to now
+                set the color of embed to red
+            reply with last created embed
+        else:
+            make embed:
+                set title of embed to title with text "Queue is empty!"
+                set the footer of embed to footer with text "%event-user%"
+                set the timestamp of embed to now
+                set the color of embed to red
+            reply with last created embed
+ 
+discord command info:
+    prefixes: .
+    bots: {@botName}
+    executable in: guild
+    trigger:
+        if event-bot is playing:
+            make embed:
+                set title of embed to title with text discord name of track event-bot is playing and link url of track event-bot is playing
+                set the colour of the embed to green
+                add field named "Time remaing" with value "%difference between position of track event-bot is playing and duration of track event-bot is playing%" to embed
+                add field named "Author" with value authors of track event-bot is playing to embed
+                set the image of embed to "https://img.youtube.com/vi/%identifier of track event-bot is playing%/hqdefault.jpg"
+                set the color of embed to blue
+        else:
+            make embed:
+                set title of embed to title with text "Nothing is playing"
+                set the color of embed to red
+        reply with last created embed
+
+discord command music_panel:
+    prefixes: .
+    bots: {@botName}
+    trigger:
+        make embed:
+            set title of embed to title with text "Music Commands"
+            set description of embed to ".play <song>%newline%.skip%newline%.stop%newline%.resume%newline%.info"
+            set color of embed to green
+        send last created embed to channel with id "814465714232229958" with {@botName}
