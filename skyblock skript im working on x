@@ -1,0 +1,106 @@
+options:
+    prefix: &6&lTITAN » &e
+
+command /island <text> [<offline player>]:
+    aliases: /is
+    trigger:
+        if arg-1 is not set:
+            # TELEPORT OR CREATE ISLAND
+            if {%player's uuid%::hasIsland} is true:
+                send "{@prefix}Teleporting you to your island!"
+                wait 5 ticks
+                teleport player to location(0, 67, -2, world("sb%player's uuid%"))
+            else:
+                execute console command "mv clone sbtemplate sb%player's uuid%"
+                send "{@prefix}Creating your island!"
+                wait 5 ticks
+                teleport player to location(0, 67, -2, world("sb%player's uuid%"))
+                set {%player's uuid%::hasIsland} to true
+                set {%player's uuid%::islandCreated} to now
+                set {%player's uuid%::islandOwner} to player
+                add player to {%player%.memberList::*}
+                add player's uuid to {inIsland::*}
+        else:
+            if arg-1 is "info":
+                if arg-2 is not set:
+                    send "&cCorrect usage: /island info <player>"
+                else:
+                    if {%arg-2's uuid%::hasIsland} is true:
+                        send "{@prefix}Getting island information..."
+                        wait 10 ticks
+                        send "&6%arg-2%&6's island"
+                        send ""
+                        send "&6Island owner: &e%{%arg-2's uuid%::islandOwner}%"
+                        send "&6Created: &e%{%arg-2's uuid%::islandCreated}%"
+                        send "&6Members: &e%{%{%arg-2's uuid%::islandOwner}%::memberList}%"
+            if arg-1 is "delete":
+                if {%player's uuid%::islandOwner} is player:
+                    send "{@prefix}Are you sure you want to delete your island?"
+                    send formatted "<run command:/isdeleteconfirm>&a&lYES<reset> <run command:/isdeletestop>&c&lNO<reset>" to player
+                    set {%player%::deleting} to true
+            if arg-1 is "invite":
+                if arg-2 is set:
+                    if {inIsland::*} contains arg-2's uuid:
+                        send "{@prefix}This player is already apart of an island."
+                    else:
+                        if {%player's uuid%::islandOwner} is player:
+                            if {%arg-2%::invited} is not set:
+                                send "{@prefix}%player% has invited you to join their island! <run command:/is join>&E&LCLICK HERE<reset> &eto join." to arg-2
+                                send "{@prefix}You have invited %arg-2% to your island."
+                                set {%arg-2%::invited} to player
+                                oop all players:
+                                    if {%{%loop-player's uuid%::islandOwner}%.memberList::*} contains loop-player:
+                                        if loop-player is not player:
+                                            send "{@prefix}%player% has invited %arg-2% to your island." to loop-player
+                            else:
+                                send "{@prefix}This player has an outstanding invite."
+            if arg-1 is "join":
+                if {%player%::invited} is not set:
+                    send "{@prefix}You haven't been invited to an island."
+                else:
+                    set {_owner} to {%player%::invited}
+                    set {%player's uuid%::islandOwner} to {_owner}
+                    set {%player's uuid%::islandCreated} to {%{_owner}'s uuid%::islandCreated}
+                    add player to {%{_owner}%.memberList::*}
+                    clear {%player%::invited}
+                    loop all players:
+                        if {%{%loop-player's uuid%::islandOwner}%.memberList::*} contains loop-player:
+                            if loop-player is not player:
+                                send "{@prefix}%player% has joined your island."
+                    
+command /isdeleteconfirm:
+    trigger:
+        if {%player's uuid%::islandOwner} is player:
+            if {%player%::deleting} is true:
+                execute console command "mv delete sb%player's uuid%"
+                wait 1 ticks
+                execute console command "mvconfirm"
+                delete {%player's uuid%::hasIsland}
+                delete {%player's uuid%::islandCreated}
+                delete {%player's uuid%::islandOwner}
+                delete {%player%::memberList}
+            else:
+                send "{@prefix}<run command:/is delete>&lClick here<reset>&e to delete your island!"
+        else:
+            send "{@prefix}You are not the island owner!"
+
+command /isdeletestop:
+    trigger:
+        if {%player%::deleting} is true:
+            delete {%player%::deleting}
+            send "{@prefix}Stopped deleting process."
+
+command /titanadmin <text> [<offline player>]:
+    permission: titan.admin
+    trigger:
+        if arg-1 is "delete":
+            if arg-2 is not set:
+                send "{@prefix}Incorrect syntax."
+            else:
+                execute console command "mv delete sb%arg-2's uuid%"
+                wait 1 ticks
+                execute console command "mvconfirm"
+                send "{@prefix}Removed %arg-2%&e's island."
+                delete {%arg-2's uuid%::hasIsland}
+                delete {%arg-2's uuid%::islandCreated}
+                delete {%arg-2's uuid%::islandOwner}
